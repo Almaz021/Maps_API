@@ -1,13 +1,13 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QLabel, QPushButton
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
 from PIL import Image
 
-width, height = 1000, 850
+width, height = 1000, 890
 
 
 class Example(QWidget):
@@ -17,18 +17,35 @@ class Example(QWidget):
         self.pixmap = None
         self.spn = [0.5, 0.5]
         self.ll = [49.099982, 55.767306]
+        self.l = 'map'
         self.initUI()
 
     def initUI(self):
         self.setGeometry(300, 50, width, height)
         self.setWindowTitle('Map')
+        
+        self.map_btn = QPushButton('map', self)
+        self.map_btn.move(0, 850)
+        self.map_btn.resize(100, 40)
+        self.map_btn.clicked.connect(self.change_l)
+        
+        self.sat_btn = QPushButton('sat', self)
+        self.sat_btn.move(100, 850)
+        self.sat_btn.resize(100, 40)
+        self.sat_btn.clicked.connect(self.change_l)
+        
+        self.gibrid_btn = QPushButton('sat,skl', self)
+        self.gibrid_btn.move(200, 850)
+        self.gibrid_btn.resize(100, 40)
+        self.gibrid_btn.clicked.connect(self.change_l)
+        
         self.response()
 
     def response(self):
         api_server = f"http://static-maps.yandex.ru/1.x/"
         map_params = {'ll': f'{self.ll[0]},{self.ll[1]}',
                       'spn': str(self.spn[0]) + ',' + str(self.spn[1]),
-                      'l': 'map'}
+                      'l': self.l}
         response = requests.get(api_server, params=map_params)
         if not response:
             print("Ошибка выполнения запроса:")
@@ -43,7 +60,7 @@ class Example(QWidget):
     def ran(self):
         img = Image.open(self.map_file)
         # print(img.size)
-        img = img.resize((width, height))
+        img = img.resize((width, height - 40))
         img.save(self.map_file)
         self.pixmap = QPixmap(self.map_file)
         self.image.move(0, 0)
@@ -66,6 +83,11 @@ class Example(QWidget):
             self.ll[0] += self.spn[0]
         elif event.key() == Qt.Key_Left and self.ll[0] - self.spn[0] >= -180:
             self.ll[0] -= self.spn[0]
+        print(self.ll)
+        self.response()
+    
+    def change_l(self):
+        self.l = self.sender().text()
         self.response()
     
     def closeEvent(self, event):
