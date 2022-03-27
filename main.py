@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtWidgets import QLabel, QRadioButton, QPushButton, QInputDialog, QMessageBox, QLabel
+from PyQt5.QtWidgets import QLabel, QRadioButton, QPushButton, QInputDialog, QMessageBox, QLabel, QCheckBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
@@ -55,6 +55,9 @@ class Example(QWidget):
         self.resetbtn = QPushButton('Сброс поискового результата', self)
         self.resetbtn.move(710, height - 60)
         self.resetbtn.clicked.connect(self.reset_point)
+        
+        self.postalcodebox = QCheckBox('Почтовый индекс', self)
+        self.postalcodebox.move(300, height - 60)
 
         self.adress = QLabel(self)     # показывает адрес (ч. 8)
         self.adress.move(5, height - 30)
@@ -93,7 +96,10 @@ class Example(QWidget):
         self.response()
 
     def set_text(self):    # специально для п.9 )
-        self.adress.setText(self.adressTop['text'])
+        if self.postalcodebox.checkState():
+            self.adress.setText(f"{self.adressTop['text']}, почтовый индекс: {self.adressTop['Address']['postal_code']}")
+        else:
+            self.adress.setText(self.adressTop['text'])
 
     def response(self):
         api_server = f"http://static-maps.yandex.ru/1.x/"
