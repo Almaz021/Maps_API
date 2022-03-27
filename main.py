@@ -48,14 +48,21 @@ class Example(QWidget):
         self.skl.toggled.connect(self.change_l)
 
         self.search = QPushButton("Поиск", self)
-        self.search.move(width // 2, height - 30)
+        self.search.move(width * 3 // 5, height - 30)
         self.search.resize(200, 25)
         self.search.clicked.connect(self.search_dialog)
+
+        self.resetbtn = QPushButton('Сброс поискового результата', self)
+        self.resetbtn.move(width * 4 // 5, height - 30)
+        self.resetbtn.clicked.connect(self.reset_point)
 
         self.setChildrenFocusPolicy(Qt.NoFocus)   # не трогать, убьёт!!!!!!
 
         self.response()
 
+    def reset_point(self):
+        self.point = []
+        self.response()
 
     def search_dialog(self, s):
         text, ok = QInputDialog.getText(self, 'Поиск', 'Введите запрос')
