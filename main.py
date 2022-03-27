@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtWidgets import QLabel, QRadioButton, QPushButton, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QLabel, QRadioButton, QPushButton, QInputDialog, QMessageBox, QLabel
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
@@ -56,12 +56,17 @@ class Example(QWidget):
         self.resetbtn.move(width * 4 // 5, height - 30)
         self.resetbtn.clicked.connect(self.reset_point)
 
+        self.adress = QLabel(self)     # показывает адрес (ч. 8)
+        self.adress.move(width // 4, height - 30)
+        self.adress.resize(400, 30)
+
         self.setChildrenFocusPolicy(Qt.NoFocus)   # не трогать, убьёт!!!!!!
 
         self.response()
 
     def reset_point(self):
         self.point = []
+        self.adress.setText('')
         self.response()
 
     def search_dialog(self, s):
@@ -79,10 +84,15 @@ class Example(QWidget):
             msgBox.setText('По данному запросу ничего не найдено')
             msgBox.exec()
             return
-        toponym_coords = toponym[0]['GeoObject']["Point"]["pos"]
+        toponym = toponym[0]['GeoObject']
+        toponym_coords = toponym["Point"]["pos"]
+        self.adressTop = toponym['metaDataProperty']['GeocoderMetaData']
         self.ll = [float(i) for i in toponym_coords.split()]
         self.point = [float(i) for i in toponym_coords.split()]
         self.response()
+
+    def set_text(self):    # специально для п.9 )
+        self.adress.setText(self.adressTop['text'])
 
     def response(self):
         api_server = f"http://static-maps.yandex.ru/1.x/"
@@ -118,13 +128,13 @@ class Example(QWidget):
         elif event.key() == Qt.Key_PageDown and self.spn < 9:
             self.spn *= 2
             print(self.spn)
-        elif event.key() == Qt.Key_Up and self.ll[1] + self.spn <= 180:
+        elif event.key() == Qt.Key_Up and self.ll[1] + self.spn < 180:
             self.ll[1] += self.spn
-        elif event.key() == Qt.Key_Down and self.ll[1] - self.spn >= -180:
+        elif event.key() == Qt.Key_Down and self.ll[1] - self.spn > -180:
             self.ll[1] -= self.spn
-        elif event.key() == Qt.Key_Right and self.ll[0] + self.spn <= 180:
+        elif event.key() == Qt.Key_Right and self.ll[0] + self.spn < 90:
             self.ll[0] += self.spn
-        elif event.key() == Qt.Key_Left and self.ll[0] - self.spn >= -180:
+        elif event.key() == Qt.Key_Left and self.ll[0] - self.spn > -90:
             self.ll[0] -= self.spn
         print(self.ll)
         self.response()
