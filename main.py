@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtWidgets import QLabel, QRadioButton
+from PyQt5.QtWidgets import QLabel, QRadioButton, QPushButton, QInputDialog, QMessageBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
@@ -20,7 +20,8 @@ class Example(QWidget):
         self.image = QLabel(self)
         self.pixmap = None
         self.spn = 0.5
-        self.ll = [49.099982, 55.767306]
+        self.ll = [49.106414, 55.796127]
+        self.point = []
         self.maptype = 'map'
         self.initUI()
 
@@ -46,8 +47,36 @@ class Example(QWidget):
         self.sat.toggled.connect(self.change_l)
         self.skl.toggled.connect(self.change_l)
 
+        self.search = QPushButton("Поиск", self)
+        self.search.move(width // 2, height - 30)
+        self.search.resize(200, 25)
+        self.search.clicked.connect(self.search_dialog)
+
         self.setChildrenFocusPolicy(Qt.NoFocus)   # не трогать, убьёт!!!!!!
 
+        self.response()
+
+
+    def search_dialog(self, s):
+        text, ok = QInputDialog.getText(self, 'Поиск', 'Введите запрос')
+        if not ok:
+            print('not ok')
+            return
+        print('ok')
+        api_server = f"https://geocode-maps.yandex.ru/1.x/"
+        map_params = {'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
+                      'geocode': text,
+                      'format': 'json'}
+        response = requests.get(api_server, params=map_params)
+        toponym = response.json()['response']['GeoObjectCollection']['featureMember']
+        if not toponym:
+            msgBox = QMessageBox()
+            msgBox.setText('По данному запросу ничего не найдено')
+            msgBox.exec()
+            return
+        toponym_coords = toponym[0]['GeoObject']["Point"]["pos"]
+        self.ll = [float(i) for i in toponym_coords.split()]
+        self.point = [float(i) for i in toponym_coords.split()]
         self.response()
 
     def response(self):
@@ -56,6 +85,8 @@ class Example(QWidget):
                       'spn': str(self.spn) + ',' + str(self.spn),
                       'l': self.maptype,
                       'size': '600,450'}
+        if self.point:
+            map_params['pt'] = f'{self.point[0]},{self.point[1]},pm2rdm'
         response = requests.get(api_server, params=map_params)
         if not response:
             print("Ошибка выполнения запроса:")
