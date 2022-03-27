@@ -60,9 +60,7 @@ class Example(QWidget):
     def search_dialog(self, s):
         text, ok = QInputDialog.getText(self, 'Поиск', 'Введите запрос')
         if not ok:
-            print('not ok')
             return
-        print('ok')
         api_server = f"https://geocode-maps.yandex.ru/1.x/"
         map_params = {'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
                       'geocode': text,
@@ -90,7 +88,7 @@ class Example(QWidget):
         response = requests.get(api_server, params=map_params)
         if not response:
             print("Ошибка выполнения запроса:")
-            print(api_server + '?' + '&'.join([f'{k}={map_params[k]}' for k in map_params.keys()]))
+            print(f"{api_server}?{'&'.join([f'{k}={map_params[k]}' for k in map_params.keys()])}")
             print("Http статус:", response.status_code, "(", response.reason, ")")
             sys.exit(1)
         self.map_file = "map.png"
@@ -113,13 +111,13 @@ class Example(QWidget):
         elif event.key() == Qt.Key_PageDown and self.spn < 9:
             self.spn *= 2
             print(self.spn)
-        elif event.key() == Qt.Key_Up and self.ll[1] + self.spn * 2 <= 180:
+        elif event.key() == Qt.Key_Up and self.ll[1] + self.spn <= 180:
             self.ll[1] += self.spn
-        elif event.key() == Qt.Key_Down and self.ll[1] - self.spn * 2 >= -180:
+        elif event.key() == Qt.Key_Down and self.ll[1] - self.spn >= -180:
             self.ll[1] -= self.spn
-        elif event.key() == Qt.Key_Right and self.ll[0] + self.spn * 2 <= 180:
+        elif event.key() == Qt.Key_Right and self.ll[0] + self.spn <= 180:
             self.ll[0] += self.spn
-        elif event.key() == Qt.Key_Left and self.ll[0] - self.spn * 2 >= -180:
+        elif event.key() == Qt.Key_Left and self.ll[0] - self.spn >= -180:
             self.ll[0] -= self.spn
         print(self.ll)
         self.response()
