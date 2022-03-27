@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 import requests
 from PIL import Image
 
-width, height = 1200, 940
+width, height = 900, 980
 
 maptypes = {'Схема': 'map',
             'Спутник': 'sat',
@@ -19,7 +19,7 @@ class Example(QWidget):
         super(Example, self).__init__()
         self.image = QLabel(self)
         self.pixmap = None
-        self.spn = 0.5
+        self.z = 8
         self.ll = [49.106414, 55.796127]
         self.point = []
         self.maptype = 'map'
@@ -40,25 +40,25 @@ class Example(QWidget):
         self.sat = QRadioButton("Спутник", self)
         self.skl = QRadioButton("Гибрид", self)
         self.mapbtn.setChecked(True)
-        self.mapbtn.move(5, height - 30)
-        self.sat.move(95, height - 30)
-        self.skl.move(185, height - 30)
+        self.mapbtn.move(5, height - 60)
+        self.sat.move(95, height - 60)
+        self.skl.move(185, height - 60)
         self.mapbtn.toggled.connect(self.change_l)
         self.sat.toggled.connect(self.change_l)
         self.skl.toggled.connect(self.change_l)
 
         self.search = QPushButton("Поиск", self)
-        self.search.move(width * 3 // 5, height - 30)
+        self.search.move(500, height - 60)
         self.search.resize(200, 25)
         self.search.clicked.connect(self.search_dialog)
 
         self.resetbtn = QPushButton('Сброс поискового результата', self)
-        self.resetbtn.move(width * 4 // 5, height - 30)
+        self.resetbtn.move(710, height - 60)
         self.resetbtn.clicked.connect(self.reset_point)
 
         self.adress = QLabel(self)     # показывает адрес (ч. 8)
-        self.adress.move(width // 4, height - 30)
-        self.adress.resize(400, 30)
+        self.adress.move(5, height - 30)
+        self.adress.resize(900, 30)
 
         self.setChildrenFocusPolicy(Qt.NoFocus)   # не трогать, убьёт!!!!!!
 
@@ -87,6 +87,7 @@ class Example(QWidget):
         toponym = toponym[0]['GeoObject']
         toponym_coords = toponym["Point"]["pos"]
         self.adressTop = toponym['metaDataProperty']['GeocoderMetaData']
+        self.set_text()
         self.ll = [float(i) for i in toponym_coords.split()]
         self.point = [float(i) for i in toponym_coords.split()]
         self.response()
@@ -97,9 +98,9 @@ class Example(QWidget):
     def response(self):
         api_server = f"http://static-maps.yandex.ru/1.x/"
         map_params = {'ll': f'{self.ll[0]},{self.ll[1]}',
-                      'spn': str(self.spn) + ',' + str(self.spn),
+                      'z': self.z,
                       'l': self.maptype,
-                      'size': '600,450'}
+                      'size': '450,450'}
         if self.point:
             map_params['pt'] = f'{self.point[0]},{self.point[1]},pm2rdm'
         response = requests.get(api_server, params=map_params)
@@ -115,29 +116,42 @@ class Example(QWidget):
 
     def ran(self):
         img = Image.open(self.map_file)
-        img = img.resize((width, width * 3 // 4))
+        img = img.resize((900, 900))
         img.save(self.map_file)
         self.pixmap = QPixmap(self.map_file)
         self.image.move(0, 0)
         self.image.setPixmap(self.pixmap)
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_PageUp and self.spn > 0.0009765625:
-            self.spn /= 2
-            print(self.spn)
-        elif event.key() == Qt.Key_PageDown and self.spn < 9:
-            self.spn *= 2
-            print(self.spn)
-        elif event.key() == Qt.Key_Up and self.ll[1] + self.spn < 180:
-            self.ll[1] += self.spn
-        elif event.key() == Qt.Key_Down and self.ll[1] - self.spn > -180:
-            self.ll[1] -= self.spn
-        elif event.key() == Qt.Key_Right and self.ll[0] + self.spn < 90:
-            self.ll[0] += self.spn
-        elif event.key() == Qt.Key_Left and self.ll[0] - self.spn > -90:
-            self.ll[0] -= self.spn
+        delta = 900 * (180 / (2 ** (self.z + 9)))
+        if event.key() == Qt.Key_PageUp and self.z < 17:
+            self.z += 1
+            print(self.z)
+        elif event.key() == Qt.Key_PageDown and self.z > 0:
+            self.z -= 1
+            print(self.z)
+        elif event.key() == Qt.Key_Up and self.ll[1] + delta < 90:
+            self.ll[1] += delta
+        elif event.key() == Qt.Key_Down and self.ll[1] - delta > -90:
+            self.ll[1] -= delta
+        elif event.key() == Qt.Key_Right:
+            self.ll[0] += delta * 2
+            while self.ll[0] > 180:
+                self.ll[0] -= 360
+        elif event.key() == Qt.Key_Left:
+            self.ll[0] -= delta * 2
+            while self.ll[0] < -180:
+                self.ll += 360
         print(self.ll)
         self.response()
+
+    """def mousePressEvent(self, event):
+        coords = [self.ll[0] + (event.x() - 450) * (180 / (2 ** (self.z + 9))), \
+                  self.ll[1] - (event.y() - 450) * (180 / (2 ** (self.z + 9)))]
+        # https://yandex.ru/dev/maps/jsapi/doc/2.1/theory/index.html
+        print(coords)
+        self.point = coords
+        self.response()"""
     
     def change_l(self):
         if self.sender().isChecked():
