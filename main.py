@@ -58,6 +58,7 @@ class Example(QWidget):
         
         self.postalcodebox = QCheckBox('Почтовый индекс', self)
         self.postalcodebox.move(300, height - 60)
+        self.postalcodebox.clicked.connect(self.set_text)
 
         self.adress = QLabel(self)     # показывает адрес (ч. 8)
         self.adress.move(5, height - 30)
