@@ -98,7 +98,8 @@ class Example(QWidget):
 
     def set_text(self):    # специально для п.9 )
         if self.postalcodebox.checkState():
-            self.adress.setText(f"{self.adressTop['text']}, почтовый индекс: {self.adressTop['Address']['postal_code']}")
+            self.adress.setText(f"{self.adressTop['text']}, почтовый индекс: " +
+                                f"{self.adressTop['Address'].get('postal_code', 'не определён')}")
         else:
             self.adress.setText(self.adressTop['text'])
 
@@ -123,7 +124,7 @@ class Example(QWidget):
 
     def ran(self):
         img = Image.open(self.map_file)
-        # img = img.resize((900, 900))
+        img = img.resize((900, 900))
         img.save(self.map_file)
         self.pixmap = QPixmap(self.map_file)
         self.image.move(0, 0)
@@ -154,9 +155,9 @@ class Example(QWidget):
 
     def mousePressEvent(self, event):
         rho = 2 ** (self.z + 8) / 2
-        long = (event.x() - 225) / rho * 180
+        long = (event.x() - 450) / rho * 180 / 2
         coords = [self.ll[0] + long, \
-                  self.ll[1] - (event.y() - 225) * (180 / (2 ** (self.z + 8)))]
+                  self.ll[1] - (event.y() - 450) * (180 / (2 ** (self.z + 9)))]
         # https://yandex.ru/dev/maps/jsapi/doc/2.1/theory/index.html
         print(coords)
         self.point = coords
