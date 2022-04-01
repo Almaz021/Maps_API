@@ -35,7 +35,8 @@ class Example(QWidget):
     def initUI(self):
         self.setGeometry(300, 50, width, height)
         self.setWindowTitle('Map')
-
+        
+        self.adressTop = ''
         self.mapbtn = QRadioButton("Схема", self)
         self.sat = QRadioButton("Спутник", self)
         self.skl = QRadioButton("Гибрид", self)
@@ -89,6 +90,7 @@ class Example(QWidget):
             msgBox.exec()
             return
         toponym = toponym[0]['GeoObject']
+        self.spn = toponym['boundedBy']['Envelope']
         toponym_coords = toponym["Point"]["pos"]
         self.adressTop = toponym['metaDataProperty']['GeocoderMetaData']
         self.set_text()
@@ -97,11 +99,12 @@ class Example(QWidget):
         self.response()
 
     def set_text(self):    # специально для п.9 )
-        if self.postalcodebox.checkState():
-            self.adress.setText(f"{self.adressTop['text']}, почтовый индекс: " +
-                                f"{self.adressTop['Address'].get('postal_code', 'не определён')}")
-        else:
-            self.adress.setText(self.adressTop['text'])
+        if self.adressTop:
+            if self.postalcodebox.checkState():
+                self.adress.setText(f"{self.adressTop['text']}, почтовый индекс: " +
+                                    f"{self.adressTop['Address'].get('postal_code', 'не определён')}")
+            else:
+                self.adress.setText(self.adressTop['text'])
 
     def response(self):
         api_server = f"http://static-maps.yandex.ru/1.x/"
