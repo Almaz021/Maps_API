@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtWidgets import QLabel, QRadioButton, QPushButton, QInputDialog, QMessageBox, QLabel, QCheckBox
+from PyQt5.QtWidgets import QRadioButton, QPushButton, QInputDialog, QMessageBox, QLabel, QCheckBox
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import requests
@@ -30,12 +30,13 @@ class Example(QWidget):
             for childQWidget in parentQWidget.findChildren(QWidget):
                 childQWidget.setFocusPolicy(policy)
                 recursiveSetChildFocusPolicy(childQWidget)
+
         recursiveSetChildFocusPolicy(self)
 
     def initUI(self):
         self.setGeometry(300, 50, width, height)
         self.setWindowTitle('Map')
-        
+
         self.adressTop = ''
         self.mapbtn = QRadioButton("Схема", self)
         self.sat = QRadioButton("Спутник", self)
@@ -61,11 +62,11 @@ class Example(QWidget):
         self.postalcodebox.move(300, height - 60)
         self.postalcodebox.clicked.connect(self.set_text)
 
-        self.adress = QLabel(self)     # показывает адрес (ч. 8)
+        self.adress = QLabel(self)  # показывает адрес (ч. 8)
         self.adress.move(5, height - 30)
         self.adress.resize(900, 30)
 
-        self.setChildrenFocusPolicy(Qt.NoFocus)   # не трогать, убьёт!!!!!!
+        self.setChildrenFocusPolicy(Qt.NoFocus)  # не трогать, убьёт!!!!!!
 
         self.response()
 
@@ -98,7 +99,7 @@ class Example(QWidget):
         self.point = [float(i) for i in toponym_coords.split()]
         self.response()
 
-    def set_text(self):    # специально для п.9 )
+    def set_text(self):  # специально для п.9 )
         if self.adressTop:
             if self.postalcodebox.checkState():
                 self.adress.setText(f"{self.adressTop['text']}, почтовый индекс: " +
@@ -159,18 +160,29 @@ class Example(QWidget):
     def mousePressEvent(self, event):
         rho = 2 ** (self.z + 8) / 2
         long = (event.x() - 450) / rho * 180 / 2
-        coords = [self.ll[0] + long, \
+        coords = [self.ll[0] + long,
                   self.ll[1] - (event.y() - 450) * (180 / (2 ** (self.z + 9)))]
         # https://yandex.ru/dev/maps/jsapi/doc/2.1/theory/index.html
         print(coords)
+        api_server = f"https://geocode-maps.yandex.ru/1.x/"
+        map_params = {'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
+                      'geocode': f'{coords[0]}, {coords[1]}',
+                      'format': 'json'}
+        response = requests.get(api_server, params=map_params)
+        print(response.json()['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty'][
+                  'GeocoderMetaData']['text'])
         self.point = coords
+        self.adressTop = \
+            response.json()['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty'][
+                'GeocoderMetaData']
+        self.set_text()
         self.response()
-    
+
     def change_l(self):
         if self.sender().isChecked():
             self.maptype = maptypes[self.sender().text()]
         self.response()
-    
+
     def closeEvent(self, event):
         os.remove(self.map_file)
 
