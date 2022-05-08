@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 import requests
 from PIL import Image
 
-width, height = 900, 980
+width, height = 900, 1000
 
 maptypes = {'Схема': 'map',
             'Спутник': 'sat',
@@ -34,36 +34,38 @@ class Example(QWidget):
         recursiveSetChildFocusPolicy(self)
 
     def initUI(self):
-        self.setGeometry(300, 50, width, height)
+        self.setGeometry(300, 35, width, height)
         self.setWindowTitle('Map')
-
+        self.a = QLabel('Организация: ', self)
+        self.a.setFixedSize(900, 30)
+        self.a.move(5, 970)
         self.adressTop = ''
         self.mapbtn = QRadioButton("Схема", self)
         self.sat = QRadioButton("Спутник", self)
         self.skl = QRadioButton("Гибрид", self)
         self.mapbtn.setChecked(True)
-        self.mapbtn.move(5, height - 60)
-        self.sat.move(95, height - 60)
-        self.skl.move(185, height - 60)
+        self.mapbtn.move(5, height - 80)
+        self.sat.move(95, height - 80)
+        self.skl.move(185, height - 80)
         self.mapbtn.toggled.connect(self.change_l)
         self.sat.toggled.connect(self.change_l)
         self.skl.toggled.connect(self.change_l)
 
         self.search = QPushButton("Поиск", self)
-        self.search.move(500, height - 60)
+        self.search.move(500, height - 80)
         self.search.resize(200, 25)
         self.search.clicked.connect(self.search_dialog)
 
         self.resetbtn = QPushButton('Сброс поискового результата', self)
-        self.resetbtn.move(710, height - 60)
+        self.resetbtn.move(710, height - 80)
         self.resetbtn.clicked.connect(self.reset_point)
 
         self.postalcodebox = QCheckBox('Почтовый индекс', self)
-        self.postalcodebox.move(300, height - 60)
+        self.postalcodebox.move(300, height - 80)
         self.postalcodebox.clicked.connect(self.set_text)
 
         self.adress = QLabel(self)  # показывает адрес (ч. 8)
-        self.adress.move(5, height - 30)
+        self.adress.move(5, height - 55)
         self.adress.resize(900, 30)
 
         self.setChildrenFocusPolicy(Qt.NoFocus)  # не трогать, убьёт!!!!!!
@@ -165,10 +167,26 @@ class Example(QWidget):
         # https://yandex.ru/dev/maps/jsapi/doc/2.1/theory/index.html
         print(coords)
         api_server = f"https://geocode-maps.yandex.ru/1.x/"
+        api_server1 = 'https://search-maps.yandex.ru/v1/'
         map_params = {'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
                       'geocode': f'{coords[0]}, {coords[1]}',
                       'format': 'json'}
+
         response = requests.get(api_server, params=map_params)
+        self.a.setText('Организация: ')
+        if event.button() == 2:
+            map_params1 = {'text': response.json()['response']['GeoObjectCollection']['featureMember'][0]['GeoObject'][
+                'metaDataProperty'][
+                'GeocoderMetaData']['text'],
+                           'lang': 'ru_RU',
+                           'apikey': '4284531f-f185-4044-b4c4-4c689f95e56d',
+                           'type': 'biz',
+                           'spn': '0.5, 0.5'
+                           }
+            response1 = requests.get(api_server1, params=map_params1)
+            self.a.setText(f'Организация: {response1.json()["features"][0]["properties"]["name"]}')
+            print(response1.json()["features"][0]["properties"]["name"])
+
         print(response.json()['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['metaDataProperty'][
                   'GeocoderMetaData']['text'])
         self.point = coords
